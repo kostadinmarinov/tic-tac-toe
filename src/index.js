@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import Loadable from './Loadable'
+import AsyncComponent from './AsyncComponent'
+// import Loadable from 'react-loadable'
 
 function Square(props) {
     let title = props.square.value;
@@ -45,6 +47,35 @@ class Board extends React.Component {
         );
     }
 }
+
+// function LoadingComponent(props) {
+//     if (props.error) {
+//       // When the loader has errored
+//       return <div>Error! <button onClick={ props.retry }>Retry</button></div>;
+//     } else if (props.timedOut) {
+//       // When the loader has taken longer than the timeout
+//       return <div>Taking a long time... <button onClick={ props.retry }>Retry</button></div>;
+//     } else if (props.pastDelay) {
+//       // When the loader has taken longer than the delay
+//       return <div>Loading...</div>;
+//     } else {
+//       // When the loader has just started
+//       return null;
+//     }
+//   }
+
+// const LoadableBoard = Loadable.Map({
+//     loader: {
+//       size: (props) => props.size,
+//     },
+//     loading: LoadingComponent,
+//     render(loaded, props) {
+//       let size = loaded.size;
+//       return <Board
+//         size={size}
+//         {...props} />;
+//     },
+//   });
 
 class Game extends React.Component {
     constructor(props) {
@@ -192,6 +223,15 @@ class Game extends React.Component {
                                 squares={board.squares}
                                 onClick={(i) => this.handleClick(i)} />
                         </Loadable>
+                        {/* <AsyncComponent promise={() => this.state.size2}>
+                            <Board
+                                squares={board.squares}
+                                onClick={(i) => this.handleClick(i)} />
+                        </AsyncComponent> */}
+                        {/* <LoadableBoard
+                            size={this.state.size2}
+                            squares={board.squares}
+                            onClick={(i) => this.handleClick(i)} /> */}
                         {/* <Board
                             squares={board.squares}
                             size={this.state.size}
