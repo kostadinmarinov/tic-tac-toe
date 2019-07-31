@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import Loadable from './Loadable'
 
 function Square(props) {
     let title = props.square.value;
@@ -100,6 +101,11 @@ class Game extends React.Component {
     newGame(size) {
         return {
             size: size,
+            size2: new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        resolve(size);
+                    }, 3000);
+                }),
             history: [
                 {
                     squares: Array(size * size).fill({
@@ -170,10 +176,26 @@ class Game extends React.Component {
                 </div>
                 <div className="game">
                     <div className="game-board">
-                        <Board
+                    {/* https://stackoverflow.com/questions/33242378/rendering-react-components-with-promises-inside-the-render-method */}
+                        {/* <Async
+                            promise={new Promise((resolve, reject) => {
+                                setTimeout(() => {
+                                    resolve(this.state.size);
+                                }, 3000);
+                                })}
+                            then={(size) => <Board
+                                squares={board.squares}
+                                size={size}
+                                onClick={(i) => this.handleClick(i)} />} /> */}
+                        <Loadable data={{ size: this.state.size2 }}>
+                            <Board
+                                squares={board.squares}
+                                onClick={(i) => this.handleClick(i)} />
+                        </Loadable>
+                        {/* <Board
                             squares={board.squares}
                             size={this.state.size}
-                            onClick={(i) => this.handleClick(i)} />
+                            onClick={(i) => this.handleClick(i)} /> */}
                     </div>
                     <div className="game-info">
                         <div>{status}</div>
