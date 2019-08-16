@@ -5,13 +5,13 @@ export default class Loadable extends React.Component {
         super(props);
 
         this.state = {
-            data: undefined
+            child: undefined
         };
     }
 
     render() {
-        // return this.state.data === undefined ? "Loading..." : this.props.render(this.state.data);
-        return this.state.data === undefined ? "Loading..." : this.renderChildren();
+        return this.state.child === undefined ? "Loading..." : this.state.child;
+        // return this.state.data === undefined ? "Loading..." : this.renderChildren();
     }
 
     renderChildren() {
@@ -20,44 +20,63 @@ export default class Loadable extends React.Component {
       ))
     }
 
-    async componentDidMount() {
-        await this._resolve();
+    componentDidMount() {
+         this._resolve();
     }
 
-    async componentDidUpdate(prevProps, prevState) {
-        if (prevProps.data !== this.props.data) {
-            await this._resolve();
+    componentDidUpdate(prevProps, prevState) {
+        if (this.props.data !== prevProps.data) {
+             for (const key in this.props.data) {
+                 if (this.props.data.hasOwnProperty(key)) {
+                     if (this.props.data[key] !== prevProps.data[key]) {
+                        this._resolve();
+                     }
+                 }
+             }
         }
     }
 
     async _resolve() {
-        this.setState({ data: undefined });
+        const dataPromise = recursiveObjectPromiseAll(this.props.data);
 
-        const data = await this.recursiveObjectPromiseAll(this.props.data);
+        // const timeoutData = undefined;
+        const timeoutData = await Promise.race([dataPromise, new Promise((resolve) => { setTimeout(resolve, 200, undefined) })]); // delay Loading with 200ms to avoid blinking
+        this._setChild(timeoutData);
+        
+        // const data = (await Promise.all([dataPromise, new Promise((resolve) => { setTimeout(resolve, 500, undefined) })]))[0]; // once Loading is shown - keep it at least 500ms to avoid blinking
+        const data = await dataPromise;
 
-        this.setState({ data });
+        if (data !== timeoutData) {
+            this._setChild(data);
+        }
     }
+
+    _setChild(data) {
+        const child = data ? this.props.render(data) : undefined;
+        // const child = data ? this.renderChildren(data) : undefined;
+        this.setState({ child });
+    }
+}
     
-    zipObject  (keys, values) {
-        const result = {};
+const zipObject =  (keys, values) => {
+    const result = {};
 
-        keys.forEach((key, i) => {
-            result[key] = values[i];
-        });
+    keys.forEach((key, i) => {
+        result[key] = values[i];
+    });
 
-        return result;
-    };
+    return result;
+};
 
-    recursiveObjectPromiseAll  (obj) {
-        const keys = Object.keys(obj);
-        return Promise.all(keys.map(key => {
-            const value = obj[key];
-            // Promise.resolve(value) !== value should work, but !value.then always works
-            if (typeof value === 'object' && !value.then) {
-            return this.recursiveObjectPromiseAll(value);
-            }
-            return value;
-        }))
-            .then(result => this.zipObject(keys, result));
-        };
-    }
+const recursiveObjectPromiseAll =  (obj)=>  {
+    const keys = Object.keys(obj);
+    return Promise.all(keys.map(key => {
+        const value = obj[key];
+        // Promise.resolve(value) !== value should work, but !value.then always works
+        if (typeof value === 'object' && !value.then) {
+        return recursiveObjectPromiseAll(value);
+        }
+        return value;
+    }))
+        .then(result => zipObject(keys, result));
+};

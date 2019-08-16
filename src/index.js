@@ -135,7 +135,7 @@ class Game extends React.Component {
             size2: new Promise((resolve, reject) => {
                     setTimeout(() => {
                         resolve(size);
-                    }, 3000);
+                    }, 1000);
                 }),
             history: [
                 {
@@ -218,11 +218,18 @@ class Game extends React.Component {
                                 squares={board.squares}
                                 size={size}
                                 onClick={(i) => this.handleClick(i)} />} /> */}
-                        <Loadable data={{ size: this.state.size2 }}>
+                        {/* <Loadable data={{ size: this.state.size2 }}>
                             <Board
                                 squares={board.squares}
                                 onClick={(i) => this.handleClick(i)} />
-                        </Loadable>
+                        </Loadable> */}
+                        <Loadable
+                            data={{ size: this.state.size2, resolvedSize: this.state.size }}
+                            render={({size}) =>
+                                <Board
+                                    squares={board.squares}
+                                    size={size}
+                                    onClick={(i) => this.handleClick(i)} />} />
                         {/* <AsyncComponent promise={() => this.state.size2}>
                             <Board
                                 squares={board.squares}
