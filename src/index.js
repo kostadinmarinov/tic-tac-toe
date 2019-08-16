@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import Loadable from './Loadable'
-import AsyncComponent from './AsyncComponent'
+// import AsyncComponent from './AsyncComponent'
 // import Loadable from 'react-loadable'
 
 function Square(props) {
@@ -95,15 +95,17 @@ class Game extends React.Component {
         return this.state.history[this.state.step];
     }
 
-    handleClick(i) {
+    handleClick = async (i) => {
         const board = this.currentBoard;
 
+        // if ((await board.squares)[i].value || board.winner) {
         if (board.squares[i].value || board.winner) {
             return;
         }
 
         const currentPlayer = this.currentPlayer;
 
+        // const newSquares = (await board.squares).slice();
         const newSquares = board.squares.slice();
         newSquares[i] = {...newSquares[i], value: currentPlayer};
         // newSquares[i].value = currentPlayer;
@@ -121,6 +123,7 @@ class Game extends React.Component {
             history: [
                 ...this.state.history.slice(0, this.state.step + 1),
                 {
+                    // squares: Promise.resolve(newSquares),
                     squares: newSquares,
                     selectedIndex: i,
                     winner: winnerLine ? currentPlayer : null,
@@ -139,6 +142,14 @@ class Game extends React.Component {
                 }),
             history: [
                 {
+                    // squares: new Promise((resolve, reject) => {
+                    //     setTimeout(() => {
+                    //         resolve(Array(size * size).fill({
+                    //             value: null,
+                    //             isHighlighted: false
+                    //         }));
+                    //     }, 100);
+                    // }),
                     squares: Array(size * size).fill({
                         value: null,
                         isHighlighted: false
@@ -194,7 +205,7 @@ class Game extends React.Component {
         const movesList = this.state.isHistoryAsc ? <ol>{moves}</ol> : <ol reversed>{moves}</ol>;
 
         const sizes = Array.from({length: 20 - 2}, (x, i) => i + 3).map(x => <option key={x} value={x}>Size {x}</option>);
-        
+
         return (
             <>
                 <div className="game-info">
@@ -207,42 +218,13 @@ class Game extends React.Component {
                 </div>
                 <div className="game">
                     <div className="game-board">
-                    {/* https://stackoverflow.com/questions/33242378/rendering-react-components-with-promises-inside-the-render-method */}
-                        {/* <Async
-                            promise={new Promise((resolve, reject) => {
-                                setTimeout(() => {
-                                    resolve(this.state.size);
-                                }, 3000);
-                                })}
-                            then={(size) => <Board
-                                squares={board.squares}
-                                size={size}
-                                onClick={(i) => this.handleClick(i)} />} /> */}
-                        {/* <Loadable data={{ size: this.state.size2 }}>
-                            <Board
-                                squares={board.squares}
-                                onClick={(i) => this.handleClick(i)} />
-                        </Loadable> */}
                         <Loadable
-                            data={{ size: this.state.size2, resolvedSize: this.state.size }}
-                            render={({size}) =>
+                            promises={{ size: this.state.size2 }}
+                            renderResult={({size}) =>
                                 <Board
                                     squares={board.squares}
                                     size={size}
-                                    onClick={(i) => this.handleClick(i)} />} />
-                        {/* <AsyncComponent promise={() => this.state.size2}>
-                            <Board
-                                squares={board.squares}
-                                onClick={(i) => this.handleClick(i)} />
-                        </AsyncComponent> */}
-                        {/* <LoadableBoard
-                            size={this.state.size2}
-                            squares={board.squares}
-                            onClick={(i) => this.handleClick(i)} /> */}
-                        {/* <Board
-                            squares={board.squares}
-                            size={this.state.size}
-                            onClick={(i) => this.handleClick(i)} /> */}
+                                    onClick={this.handleClick} />} />
                     </div>
                     <div className="game-info">
                         <div>{status}</div>

@@ -5,56 +5,57 @@ export default class Loadable extends React.Component {
         super(props);
 
         this.state = {
-            child: undefined
+            renderResult: undefined,
+            result: undefined
         };
     }
 
     render() {
-        return this.state.child === undefined ? "Loading..." : this.state.child;
-        // return this.state.data === undefined ? "Loading..." : this.renderChildren();
-    }
-
-    renderChildren() {
-      return React.Children.map(this.props.children, child => (
-        React.cloneElement(child, this.state.data)
-      ))
+        return this.state.renderResult && this.state.result ? this.state.renderResult(this.state.result) : "Loading...";
     }
 
     componentDidMount() {
          this._resolve();
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        if (this.props.data !== prevProps.data) {
-             for (const key in this.props.data) {
-                 if (this.props.data.hasOwnProperty(key)) {
-                     if (this.props.data[key] !== prevProps.data[key]) {
+    componentDidUpdate(prevProps) {
+        if (this.props.promises !== prevProps.promises) {
+             for (const key in this.props.promises) {
+                 if (this.props.promises.hasOwnProperty(key)) {
+                     if (this.props.promises[key] !== prevProps.promises[key]) {
                         this._resolve();
+                        return;
                      }
                  }
              }
         }
-    }
 
-    async _resolve() {
-        const dataPromise = recursiveObjectPromiseAll(this.props.data);
-
-        // const timeoutData = undefined;
-        const timeoutData = await Promise.race([dataPromise, new Promise((resolve) => { setTimeout(resolve, 200, undefined) })]); // delay Loading with 200ms to avoid blinking
-        this._setChild(timeoutData);
-        
-        // const data = (await Promise.all([dataPromise, new Promise((resolve) => { setTimeout(resolve, 500, undefined) })]))[0]; // once Loading is shown - keep it at least 500ms to avoid blinking
-        const data = await dataPromise;
-
-        if (data !== timeoutData) {
-            this._setChild(data);
+        if (this.props.renderResult !== this.state.renderResult) {
+            this.setState({ renderResult: this.props.renderResult });
         }
     }
 
-    _setChild(data) {
-        const child = data ? this.props.render(data) : undefined;
-        // const child = data ? this.renderChildren(data) : undefined;
-        this.setState({ child });
+    async _resolve() {
+        const propsPromises = this.props.promises;
+        const resultPromise = recursiveObjectPromiseAll(propsPromises);
+
+        // const timeoutResult = undefined;
+        const timeoutResult = await Promise.race([resultPromise, new Promise((resolve) => { setTimeout(resolve, 200, undefined) })]); // delay Loading with 200ms to avoid blinking
+        
+        if (this.props.promises !== propsPromises) {
+            return;
+        }
+
+        this.setState({ renderResult: this.props.renderResult, result: timeoutResult });
+
+        // const result = (await Promise.all([resultPromise, new Promise((resolve) => { setTimeout(resolve, 300, undefined) })]))[0]; // once Loading is shown - keep it at least 300ms to avoid blinking
+        const result = await resultPromise;
+
+        if (result === timeoutResult || this.props.promises !== propsPromises) {
+            return;
+        }
+
+        this.setState({ result: result });
     }
 }
     
