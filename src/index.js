@@ -2,8 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import Loadable from './Loadable'
+import Loadable2 from './Loadable2'
 // import AsyncComponent from './AsyncComponent'
 // import Loadable from 'react-loadable'
+import { getStateAsync } from './utils'
 
 function Square(props) {
     let title = props.square.value;
@@ -83,6 +85,7 @@ class Game extends React.Component {
 
         this.state = {
             ...this.newGame(3),
+            loadBoard: Promise.resolve(),
             isHistoryAsc: true,
         };
     }
@@ -135,21 +138,8 @@ class Game extends React.Component {
     newGame(size) {
         return {
             size: size,
-            size2: new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        resolve(size);
-                    }, 1000);
-                }),
             history: [
                 {
-                    // squares: new Promise((resolve, reject) => {
-                    //     setTimeout(() => {
-                    //         resolve(Array(size * size).fill({
-                    //             value: null,
-                    //             isHighlighted: false
-                    //         }));
-                    //     }, 100);
-                    // }),
                     squares: Array(size * size).fill({
                         value: null,
                         isHighlighted: false
@@ -163,7 +153,20 @@ class Game extends React.Component {
     }
 
     restart(size) {
-        this.setState(this.newGame(size));
+        this.setState({
+            size,
+            loadBoard: getStateAsync(async setState => {
+                await new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        resolve();
+                    }, 1000);
+                });
+
+                const newGame = this.newGame(size);
+                setState({size: newGame.size, step: newGame.step});
+                setState({history: newGame.history,});
+            }),
+        });
     }
 
     jumpTo(i) {
@@ -218,13 +221,16 @@ class Game extends React.Component {
                 </div>
                 <div className="game">
                     <div className="game-board">
-                        <Loadable
-                            promises={{ size: this.state.size2 }}
-                            renderResult={({size}) =>
-                                <Board
-                                    squares={board.squares}
-                                    size={size}
-                                    onClick={this.handleClick} />} />
+                        <Loadable2
+                            promise={this.state.loadBoard}
+                            setState={s => this.setState(s)}
+                            renderResult={() => {
+                                return <Board
+                                squares={board.squares}
+                                size={this.state.size}
+                                onClick={this.handleClick} />;
+                            }}
+                            />
                     </div>
                     <div className="game-info">
                         <div>{status}</div>
